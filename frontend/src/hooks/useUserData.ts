@@ -8,7 +8,7 @@ export const useUserData = () => {
 
 	const fetchTasks = async () => {
 		try {
-			setLoading(true); // Optional: show loading state during refresh
+			setLoading(true);
 			const tasksResponse = await fetch(`${BACKEND_URL}/api/v1/tasks`, {
 				method: "GET",
 				credentials: "include",
@@ -20,6 +20,7 @@ export const useUserData = () => {
 			setTasks(tasksData.tasks);
 			setLoading(false);
 		} catch (err) {
+			// @ts-ignore
 			setError(err.message);
 			setLoading(false);
 		}
