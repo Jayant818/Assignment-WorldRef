@@ -2,7 +2,7 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DB_URL")
 }
 
 generator client {
@@ -13,6 +13,8 @@ model User {
   id          Int      @id @default(autoincrement())
   username    String
   email       String   @unique
+  phone       String   @unique
+  countryCode String
   password    String
   imgUrl      String?
   tasks       Task[]
@@ -25,15 +27,15 @@ model Task {
   title       String
   description String
   dueDate     DateTime
-  status      todoTask   
+  status      todoTask @default(PENDING)  // Corrected: Specify that status is of type todoTask
   userId      Int
   user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-enum todoTask{
-  PENDING
-  COMPLETED
-  IN_PROGRESS
+enum todoTask {
+  PENDING 
+  COMPLETED 
+  IN_PROGRESS 
 }

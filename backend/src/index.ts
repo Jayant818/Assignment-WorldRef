@@ -1,60 +1,151 @@
-import express from "express";
+import express, { NextFunction } from "express";
 import cors from "cors";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import cookieParser from "cookie-parser";
-import prisma from "./db";
+import { z } from "zod";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || "jayant";
 
 app.use(express.json());
-app.use(cors());
+app.use(
+	cors({
+		origin: process.env.FRONTEND_URL || "http://localhost:5173",
+		credentials: true,
+	})
+);
+
 app.use(cookieParser());
 
-app.post("/api/v1/signup", async (req, res) => {
-	const { username, password, imgUrl, email } = req.body;
+// const authMiddleware = (req, res, next) => {
+// 	const { token } = req.cookies;
 
-	if (!username || !password || !imgUrl || !email) {
-		return res.status(400).json({ message: "Please fill all the fields" });
+// 	if (!token) {
+// 		return res.status(401).json({ message: "No token provided" });
+// 	}
+
+// 	try {
+// 		const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+// 		req.userId = decoded.id;
+// 		next();
+// 	} catch (e) {
+// 		console.error(e);
+// 		res.status(401).json({ message: "Invalid token" });
+// 	}
+// };
+
+const signupSchema = z.object({
+	username: z.string().min(1),
+	password: z.string().min(6),
+	imgUrl: z.string().url(),
+	email: z.string().email(),
+	phone: z.string().min(1),
+	countryCode: z.string().min(1),
+});
+
+const loginSchema = z.object({
+	email: z.string().email(),
+	password: z.string().min(1),
+});
+
+app.get("/", (req, res) => {
+	res.json({ message: "Welcome to My API " });
+});
+
+app.get("/api/v1/user", async (req, res) => {
+	console.log("Cookies received:", req.cookies);
+	const { token } = req.cookies;
+
+	if (!token) {
+		console.log("No token provided");
+		return res.status(401).json({ message: "No token provided" });
 	}
 
 	try {
+		const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+		const userId = decoded.id;
+
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			select: {
+				username: true,
+				email: true,
+				phone: true,
+				countryCode: true,
+				imgUrl: true,
+			},
+		});
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		res.status(200).json({ user });
+	} catch (e) {
+		console.error(e);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+app.post("/api/v1/signup", async (req, res) => {
+	try {
+		const validatedData = signupSchema.parse(req.body);
+		const { username, password, imgUrl, email, phone, countryCode } =
+			validatedData;
+
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const user = await prisma.user.create({
 			data: {
 				username,
+				email,
+				phone,
+				countryCode,
 				password: hashedPassword,
 				imgUrl,
-				email,
 			},
 		});
 
-		const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1h" });
+		const token = jwt.sign({ id: user.id }, JWT_SECRET);
 		return res
-			.cookie("token", token, { httpOnly: true, secure: true })
+			.cookie("token", token, {
+				httpOnly: true,
+				secure: false,
+				sameSite: "lax",
+				path: "/",
+			})
 			.status(201)
-			.json({ message: "User created successfully", token });
+			.json({
+				message: "User created successfully",
+				user: {
+					id: user.id,
+					username: user.username,
+					email: user.email,
+					phone: user.phone,
+					countryCode: user.countryCode,
+					imgUrl: user.imgUrl,
+				},
+			});
 	} catch (e) {
+		if (e instanceof z.ZodError) {
+			return res
+				.status(400)
+				.json({ message: "Invalid input", errors: e.errors });
+		}
 		console.error(e);
 		return res.status(500).json({ message: "Internal server error" });
 	}
 });
 
 app.post("/api/v1/login", async (req, res) => {
-	const { email, password } = req.body;
-
-	if (!email || !password) {
-		return res
-			.status(400)
-			.json({ message: "Please provide username and password" });
-	}
-
 	try {
+		const validatedData = loginSchema.parse(req.body);
+		const { email, password } = validatedData;
+
 		const user = await prisma.user.findUnique({
-			where: {
-				email,
-			},
+			where: { email },
 		});
 
 		if (!user) {
@@ -67,12 +158,32 @@ app.post("/api/v1/login", async (req, res) => {
 			return res.status(401).json({ message: "Invalid credentials" });
 		}
 
-		const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1h" });
+		const token = jwt.sign({ id: user.id }, JWT_SECRET);
 		return res
-			.cookie("token", token, { httpOnly: true, secure: true })
+			.cookie("token", token, {
+				httpOnly: true,
+				secure: false,
+				sameSite: "lax",
+				path: "/",
+			})
 			.status(200)
-			.json({ message: "Login successful", token });
+			.json({
+				message: "Login successful",
+				user: {
+					id: user.id,
+					username: user.username,
+					email: user.email,
+					phone: user.phone,
+					countryCode: user.countryCode,
+					imgUrl: user.imgUrl,
+				},
+			});
 	} catch (e) {
+		if (e instanceof z.ZodError) {
+			return res
+				.status(400)
+				.json({ message: "Invalid input", errors: e.errors });
+		}
 		console.error(e);
 		return res.status(500).json({ message: "Internal server error" });
 	}
@@ -104,10 +215,15 @@ app.post("/api/v1/tasks", async (req, res) => {
 });
 
 app.get("/api/v1/tasks", async (req, res) => {
+	console.log("Cookies received:", req.cookies);
 	const { token } = req.cookies;
+	if (!token) {
+		console.log("No token provided");
+		return res.status(401).json({ message: "No token provided" });
+	}
 
 	try {
-		const decoded = jwt.verify(token, JWT_SECRET);
+		const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 		const userId = decoded.id;
 
 		const tasks = await prisma.task.findMany({
@@ -127,7 +243,7 @@ app.put("/api/v1/tasks/:id", async (req, res) => {
 	const { title, description, dueDate, status } = req.body;
 
 	try {
-		const decoded = jwt.verify(token, JWT_SECRET);
+		const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 		const userId = decoded.id;
 
 		const task = await prisma.task.update({
@@ -161,6 +277,17 @@ app.delete("/api/v1/tasks/:id", async (req, res) => {
 	}
 });
 
-app.listen(3000, () => {
-	console.log("Server is running on port 3000");
+app.post("/api/v1/logout", (req, res) => {
+	res
+		.clearCookie("token")
+		.status(200)
+		.json({ message: "Logged out successfully" });
 });
+
+const PORT = 3000;
+
+if (require.main === module) {
+	app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+export default app;
