@@ -16,7 +16,7 @@ const Navbar = () => {
 	return (
 		<nav className="bg-task-dark text-white p-4">
 			<div className="container mx-auto flex justify-between items-center">
-				<Link to="/" className="text-2xl font-bold text-task-red">
+				<Link to="/" className="text-lg md:text-2xl font-bold text-task-red">
 					Task Management
 				</Link>
 				<div className="flex items-center gap-4">
