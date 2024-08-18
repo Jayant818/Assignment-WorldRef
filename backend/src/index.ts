@@ -11,9 +11,10 @@ const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || "jayant";
 
 app.use(express.json());
+
 app.use(
 	cors({
-		origin: "https://assignment-world-ref.vercel.app/",
+		origin: "https://assignment-world-ref.vercel.app",
 		credentials: true,
 	})
 );

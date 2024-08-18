@@ -12,7 +12,7 @@ const Hero = () => {
 					</p>
 					<a
 						href="/tasks"
-						className="bg-task-red text-white px-6 py-3 rounded-lg hover:bg-red-600 mx-auto md:mx-0 w-fit"
+						className="bg-task-red text-white px-3 py-1 text-sm md:text-base  md:px-6 md:py-3  rounded-lg hover:bg-red-600 mx-auto md:mx-0 w-fit"
 					>
 						Get Started
 					</a>
