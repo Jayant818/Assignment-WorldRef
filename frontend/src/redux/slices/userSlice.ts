@@ -25,6 +25,18 @@ export const signupUser = createAsyncThunk(
 
 		if (response.ok) {
 			localStorage.setItem("user", JSON.stringify(data.user));
+
+			// Wait a moment for the cookie to be set
+			await new Promise((resolve) => setTimeout(resolve, 500));
+
+			// Verify the cookie was set
+			const checkCookie = await fetch(`${BACKEND_URL}/api/v1/check-auth`, {
+				credentials: "include",
+			});
+			console.log("Cookie check:", checkCookie);
+			if (!checkCookie.ok) {
+				throw new Error("Authentication failed");
+			}
 		}
 
 		return data;
@@ -51,6 +63,18 @@ export const loginUser = createAsyncThunk(
 		const data = await response.json();
 		if (response.ok) {
 			localStorage.setItem("user", JSON.stringify(data.user));
+
+			// Wait a moment for the cookie to be set
+			await new Promise((resolve) => setTimeout(resolve, 500));
+
+			// Verify the cookie was set
+			const checkCookie = await fetch(`${BACKEND_URL}/api/v1/check-auth`, {
+				credentials: "include",
+			});
+			console.log("Cookie check:", checkCookie);
+			if (!checkCookie.ok) {
+				throw new Error("Authentication failed");
+			}
 		}
 		return data;
 	}
