@@ -25,6 +25,11 @@ const SignUp = () => {
 			return;
 		}
 
+		if (countryCode.length !== 3) {
+			setError("Country code must be exactly 3 characters long");
+			return;
+		}
+
 		setLoading(true);
 		try {
 			console.log("Imageurl", imageUrl);
@@ -58,11 +63,19 @@ const SignUp = () => {
 
 	const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files[0]) {
-			setProfileImage(e.target.files[0]);
+			const file = e.target.files[0];
+
+			// Check file size (3MB = 3 * 1024 * 1024 bytes)
+			if (file.size > 3 * 1024 * 1024) {
+				setError("File size exceeds 3MB limit. Please choose a smaller file.");
+				return;
+			}
+
+			setProfileImage(file);
 			console.log(profileImage);
 			try {
 				const formData = new FormData();
-				formData.append("file", e.target.files[0]);
+				formData.append("file", file);
 				formData.append("upload_preset", "task-app");
 				formData.append("cloud_name", "webd-bootcamp");
 
@@ -78,7 +91,15 @@ const SignUp = () => {
 				setImageUrl(ans.url);
 			} catch (e) {
 				console.log(e);
+				setError("Error uploading image. Please try again.");
 			}
+		}
+	};
+
+	const handleCountryCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value.toUpperCase();
+		if (value.length <= 3) {
+			setCountryCode(value);
 		}
 	};
 
@@ -88,7 +109,7 @@ const SignUp = () => {
 				<h2 className="text-2xl font-bold text-center">Sign Up</h2>
 				<div className="relative w-full">
 					<label className="block text-sm font-medium text-gray-300 mb-1">
-						Upload Image
+						Upload Image (Max 3MB)
 					</label>
 					<input
 						type="file"
@@ -127,10 +148,11 @@ const SignUp = () => {
 				/>
 				<input
 					type="text"
-					placeholder="Country Code"
+					placeholder="Country Code (3 characters)"
 					value={countryCode}
-					onChange={(e) => setCountryCode(e.target.value)}
+					onChange={handleCountryCodeChange}
 					className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none"
+					maxLength={3}
 				/>
 				<input
 					type="text"

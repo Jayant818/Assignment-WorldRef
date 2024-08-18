@@ -13,8 +13,8 @@ const Hero = () => {
 						ease.
 					</p>
 					<Link
-						to="/tasks"
-						className="bg-task-red text-white px-3 py-1 text-sm md:text-base  md:px-6 md:py-3  rounded-lg hover:bg-red-600 mx-auto md:mx-0 w-fit"
+						to="/login"
+						className="bg-task-red text-white px-3 py-1 text-sm md:text-base  md:px-6 md:py-3  rounded-lg hover:bg-red-600 mx-auto md:mx-0 "
 					>
 						Get Started
 					</Link>

@@ -58,6 +58,14 @@ app.get("/", (req, res) => {
 	res.json({ message: "Welcome to My API " });
 });
 
+app.get("/api/v1/check-auth", (req, res) => {
+	if (req.cookies.token) {
+		res.status(200).json({ authenticated: true });
+	} else {
+		res.status(401).json({ authenticated: false });
+	}
+});
+
 app.get("/api/v1/user", async (req, res) => {
 	console.log("Cookies received:", req.cookies);
 	const { token } = req.cookies;
@@ -115,8 +123,8 @@ app.post("/api/v1/signup", async (req, res) => {
 		return res
 			.cookie("token", token, {
 				httpOnly: true,
-				secure: false,
-				sameSite: "lax",
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "none",
 				path: "/",
 			})
 			.status(201)
@@ -165,8 +173,8 @@ app.post("/api/v1/login", async (req, res) => {
 		return res
 			.cookie("token", token, {
 				httpOnly: true,
-				secure: false,
-				sameSite: "lax",
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "none",
 				path: "/",
 			})
 			.status(200)
