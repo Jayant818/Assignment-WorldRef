@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Hero = () => {
 	return (
 		<section className="bg-task-dark text-white flex items-center justify-center py-8">
@@ -10,12 +12,12 @@ const Hero = () => {
 						Stay on top of your tasks, track progress, and meet deadlines with
 						ease.
 					</p>
-					<a
-						href="/tasks"
+					<Link
+						to="/tasks"
 						className="bg-task-red text-white px-3 py-1 text-sm md:text-base  md:px-6 md:py-3  rounded-lg hover:bg-red-600 mx-auto md:mx-0 w-fit"
 					>
 						Get Started
-					</a>
+					</Link>
 				</div>
 				<div className="w-full md:w-[40%] mt-8 md:mt-0">
 					<img

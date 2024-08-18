@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { signupUser } from "../redux/slices/userSlice";
 import { useAppDispatch } from "../redux/store";
 import ErrorModal from "../components/ErrorModal";
@@ -150,12 +150,12 @@ const SignUp = () => {
 				<div className="text-center">
 					<p className="text-sm mt-4">
 						Already have an account?{" "}
-						<a
-							href="/login"
+						<Link
+							to="/login"
 							className="text-task-red hover:text-red-500 underline"
 						>
 							Log in
-						</a>
+						</Link>
 					</p>
 				</div>
 			</div>
